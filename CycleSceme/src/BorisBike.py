@@ -22,8 +22,16 @@ def run():
 
 def writeToDB(query):
     result = simplejson.load(query)
-    print result
-    print result['dockStation']['@ID']
+    station = result['dockStation']
+        # connect
+    db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
+    # create a cursor
+    cursor = db.cursor()
+    print station
+    statement = "INSERT INTO occupancy VALUES ('%s', '%s', '%s', '%s')" % (station['@ID'], result['updatedOn'], station['emptySlots'], station['bikesAvailable'])
+    print statement
+    cursor.execute(statement)
+    print "Number of rows inserted: %d" % cursor.rowcount
 
 def setupDB():    
     # connect
@@ -60,21 +68,21 @@ def setupDB():
 
 def setupDB_capacity():    
     # connect
-    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
+    db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
     # create a cursor
     cursor = db.cursor()
-    
+    #cursor.execute ("DROP TABLE IF EXISTS occupancy")
     cursor.execute ("""
        CREATE TABLE occupancy
        (
-        id  BIGINT,
-        location INT(4),
-        readtime DATETIME,
+        site INT(4),
+        readtime CHAR(20),
         empty INT(4),
-        inuse INT(4)
+        available INT(4)
        )
        """)
             
 if __name__ == '__main__':
+   # setupDB_capacity()
     run()
     
