@@ -24,7 +24,7 @@ def writeToDB(query):
     result = simplejson.load(query)
     station = result['dockStation']
         # connect
-    db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
+    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     # create a cursor
     cursor = db.cursor()
     print station
@@ -68,7 +68,7 @@ def setupDB():
 
 def setupDB_capacity():    
     # connect
-    db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
+    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     # create a cursor
     cursor = db.cursor()
     #cursor.execute ("DROP TABLE IF EXISTS occupancy")
