@@ -3,20 +3,21 @@ Created on Aug 31, 2010
 
 @author: jamesclark
 '''
+import urllib
 import urllib2
 import MySQLdb
 import simplejson
 
 _urllib = urllib2
-
+attrib = {'format': 'json'}
+data = urllib.urlencode(attrib)
+    
 def run():
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1')
-    req.add_header('Accept', 'application/json')
+    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1?'+data)
     response = urllib2.urlopen(req)
     writeToDB(response)
     
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/2')
-    req.add_header('Accept', 'application/json')
+    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/2?'+data)
     response = urllib2.urlopen(req)
     writeToDB(response)
 
