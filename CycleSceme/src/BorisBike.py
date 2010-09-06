@@ -15,6 +15,7 @@ from pygooglechart import Axis
 _urllib = urllib2
 attrib = {'format': 'json'}
 data = urllib.urlencode(attrib)
+db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     
 def run():
     req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1?' + data)
@@ -28,8 +29,6 @@ def run():
 def writeToDB(query):
     result = simplejson.load(query)
     station = result['dockStation']
-        # connect
-    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     # create a cursor
     cursor = db.cursor()
     print station
@@ -39,8 +38,6 @@ def writeToDB(query):
     print "Number of rows inserted: %d" % cursor.rowcount
 
 def setupDB():    
-    # connect
-    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     # create a cursor
     cursor = db.cursor()
     
@@ -72,8 +69,6 @@ def setupDB():
         print record[0] , "-->", record[1]
 
 def setupDB_capacity():    
-    # connect
-    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     # create a cursor
     cursor = db.cursor()
     #cursor.execute ("DROP TABLE IF EXISTS occupancy")
@@ -87,18 +82,18 @@ def setupDB_capacity():
        )
        """)
 
-def queryData():
+def queryData(ID=1):
     # connect
-    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
+    
     # create a cursor
     cursor = db.cursor()
     
-    cursor.execute("""SELECT available, readtime FROM occupancy WHERE site='1'""")
-    
+    #cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
+    cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
     query = cursor.fetchall()
     
     # Set the vertical range from 0 to 100
-    max_y = 20
+    max_y = 50
 
     # Chart size of 200x125 pixels and specifying the range for the Y axis
     chart = SimpleLineChart(500, 300, y_range=[0, max_y])
@@ -129,10 +124,18 @@ def queryData():
     # X axis labels
     chart.set_axis_labels(Axis.BOTTOM, y_axis)
     
-    print chart.get_url()
+    return chart
 
+def get_ids():
+    # create a cursor
+    cursor = db.cursor()
+    
+    #cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
+    cursor.execute("SELECT id FROM locations")
+    return cursor.fetchall()
             
 if __name__ == '__main__':
    # setupDB_capacity()
-    queryData()
+   for id in get_ids():
+       print queryData(id[0]).get_url()
     
