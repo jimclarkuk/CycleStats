@@ -15,14 +15,10 @@ from pygooglechart import Axis
 _urllib = urllib2
 attrib = {'format': 'json'}
 data = urllib.urlencode(attrib)
-db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
+db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
     
-def run():
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1?' + data)
-    response = urllib2.urlopen(req)
-    writeToDB(response)
-    
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/2?' + data)
+def record_for(ID):
+    req = urllib2.Request(('http://api.bike-stats.co.uk/service/rest/bikestat/%s?' % ID) + data)
     response = urllib2.urlopen(req)
     writeToDB(response)
 
@@ -37,10 +33,10 @@ def writeToDB(query):
     cursor.execute(statement)
     print "Number of rows inserted: %d" % cursor.rowcount
 
-def setupDB():    
+def setup_db():    
     # create a cursor
     cursor = db.cursor()
-    
+    cursor.execute ("DROP TABLE IF EXISTS locations")
     cursor.execute ("""
        CREATE TABLE locations
        (
@@ -53,11 +49,16 @@ def setupDB():
          temp       TINYINT(1)
        )
      """)
-    cursor.execute ("""
-       INSERT INTO locations VALUES
-         ('1', 'River Street , Clerkenwell', '51.52916347', '-0.109970527', '0', '0', '0'),
-         ('2', 'Phillimore Gardens, Kensington', '51.49960695', '-0.197574246', '0', '0', '0')
-     """)
+    
+    insert = """INSERT INTO locations VALUES"""
+#         ('1', 'River Street , Clerkenwell', '51.52916347', '-0.109970527', '0', '0', '0'),
+    locations = get_all_locations()
+    for location in locations['dockStation']:
+       insert += """('%s', '%s', '%s', '%s', '%s', '%s', '%s'), """ % (location['@ID'],location['name'].replace("'", "\\'"),location['latitude'],location['longitude'],0,0,0)#location['installed'],location['locked'],location['temporary']
+    insert = insert.rstrip(', ')
+    
+    cursor.execute(insert)
+    
     print "Number of rows inserted: %d" % cursor.rowcount
 
     # execute SQL statement
@@ -133,9 +134,17 @@ def get_ids():
     #cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
     cursor.execute("SELECT id FROM locations")
     return cursor.fetchall()
-            
-if __name__ == '__main__':
-   # setupDB_capacity()
-   for id in get_ids():
-       print queryData(id[0]).get_url()
+ 
+def get_all_locations():
+    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestats?' + data)
+    response = urllib2.urlopen(req)
+    return simplejson.load(response)  
+   
+def print_all_graphs():
+    for id in get_ids():
+        print queryData(id[0]).get_url()
     
+if __name__ == '__main__':
+    # setupDB_capacity()
+    for id in get_ids():
+        record_for(id)
