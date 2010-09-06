@@ -7,17 +7,21 @@ import urllib
 import urllib2
 import MySQLdb
 import simplejson
+from pygooglechart import Chart
+from pygooglechart import SimpleLineChart
+from pygooglechart import Axis
+
 
 _urllib = urllib2
 attrib = {'format': 'json'}
 data = urllib.urlencode(attrib)
     
 def run():
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1?'+data)
+    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/1?' + data)
     response = urllib2.urlopen(req)
     writeToDB(response)
     
-    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/2?'+data)
+    req = urllib2.Request('http://api.bike-stats.co.uk/service/rest/bikestat/2?' + data)
     response = urllib2.urlopen(req)
     writeToDB(response)
 
@@ -82,8 +86,53 @@ def setupDB_capacity():
         available INT(4)
        )
        """)
+
+def queryData():
+    # connect
+    db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
+    # create a cursor
+    cursor = db.cursor()
+    
+    cursor.execute("""SELECT available, readtime FROM occupancy WHERE site='1'""")
+    
+    query = cursor.fetchall()
+    
+    # Set the vertical range from 0 to 100
+    max_y = 20
+
+    # Chart size of 200x125 pixels and specifying the range for the Y axis
+    chart = SimpleLineChart(500, 300, y_range=[0, max_y])
+    data = []
+    y_axis = []
+    for result in query:
+        data.append(result[0])
+        y_axis.append(result[1])
+        
+    chart.add_data(data)
+
+    # Set the line colour to blue
+    chart.set_colours(['0000FF'])
+
+    # Set the vertical stripes
+    chart.fill_linear_stripes(Chart.CHART, 0, 'CCCCCC', 0.2, 'FFFFFF', 0.2)
+
+    # Set the horizontal dotted lines
+#    chart.set_grid(0, 25, 5, 5)
+
+    # The Y axis labels contains 0 to 100 skipping every 25, but remove the
+    # first number because it's obvious and gets in the way of the first X
+    # label.
+    left_axis = range(0, max_y + 1, 2)
+    left_axis[0] = ''
+    chart.set_axis_labels(Axis.LEFT, left_axis)
+    
+    # X axis labels
+    chart.set_axis_labels(Axis.BOTTOM, y_axis)
+    
+    print chart.get_url()
+
             
 if __name__ == '__main__':
    # setupDB_capacity()
-    run()
+    queryData()
     
