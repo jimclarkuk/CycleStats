@@ -7,6 +7,7 @@ import urllib
 import urllib2
 import MySQLdb
 import simplejson
+import time
 from pygooglechart import Chart
 from pygooglechart import SimpleLineChart
 from pygooglechart import Axis
@@ -15,22 +16,26 @@ from pygooglechart import Axis
 _urllib = urllib2
 attrib = {'format': 'json'}
 data = urllib.urlencode(attrib)
-db = MySQLdb.connect(host="localhost", user="root", passwd="mQe89Pfjkl", db="bike")
+db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
     
 def record_for(ID):
     req = urllib2.Request(('http://api.bike-stats.co.uk/service/rest/bikestat/%s?' % ID) + data)
     response = urllib2.urlopen(req)
     writeToDB(response)
 
-def writeToDB(query):
-    result = simplejson.load(query)
-    station = result['dockStation']
-    # create a cursor
-    cursor = db.cursor()
-    print station
-    statement = "INSERT INTO occupancy VALUES ('%s', '%s', '%s', '%s')" % (station['@ID'], result['updatedOn'], station['emptySlots'], station['bikesAvailable'])
+def writeToDB(result):
+    if 'dockStation' not in result:
+        print 'Error bitches!'
+        print result
+        return
+    statement = "INSERT INTO occupancy VALUES "
+    for station in result['dockStation']:
+        # create a cursor
+        cursor = db.cursor()
+        print station
+        statement += """('%s', '%s', '%s', '%s'), """ % (station['@ID'], result['updatedOn'], station['emptySlots'], station['bikesAvailable'])
     print statement
-    cursor.execute(statement)
+    cursor.execute(statement.rstrip(', '))
     print "Number of rows inserted: %d" % cursor.rowcount
 
 def setup_db():    
@@ -58,16 +63,6 @@ def setup_db():
     insert = insert.rstrip(', ')
     
     cursor.execute(insert)
-    
-    print "Number of rows inserted: %d" % cursor.rowcount
-
-    # execute SQL statement
-    cursor.execute("SELECT * FROM locations")
-    # get the resultset as a tuple
-    result = cursor.fetchall()
-    # iterate through resultset
-    for record in result:
-        print record[0] , "-->", record[1]
 
 def setupDB_capacity():    
     # create a cursor
@@ -92,18 +87,13 @@ def queryData(ID=1):
     #cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
     cursor.execute("SELECT available, readtime FROM occupancy WHERE site='%s'" % ID)
     query = cursor.fetchall()
-    
+    print query
     # Set the vertical range from 0 to 100
     max_y = 50
 
     # Chart size of 200x125 pixels and specifying the range for the Y axis
     chart = SimpleLineChart(500, 300, y_range=[0, max_y])
-    data = []
-    y_axis = []
-    for result in query:
-        data.append(result[0])
-        y_axis.append(result[1])
-        
+    data, y_axis = ([[x[i] for x in query] for i in [0,1]])    
     chart.add_data(data)
 
     # Set the line colour to blue
@@ -145,6 +135,11 @@ def print_all_graphs():
         print queryData(id[0]).get_url()
     
 if __name__ == '__main__':
-    # setupDB_capacity()
-    for id in get_ids():
-        record_for(id)
+#    print "started"
+#    for hour in range(0, 24):
+#        print "running"
+#        writeToDB(get_all_locations())
+#        print "done for now"
+#        time.sleep(300)
+#    print "done"
+    print queryData(272).get_url()
