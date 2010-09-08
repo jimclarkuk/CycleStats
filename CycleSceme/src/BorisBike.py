@@ -105,8 +105,15 @@ def queryData(ID=1):
     max_y = 50
 
     # Chart size of 200x125 pixels and specifying the range for the Y axis
-    chart = SimpleLineChart(500, 300, y_range=[0, max_y])
-    data, y_axis = ([[x[i] for x in query] for i in [0, 1]])    
+    chart = SimpleLineChart(800, 300, y_range=[0, max_y])
+    
+    data, y_axis = ([[x[i] for x in query] for i in [0, 1]])
+    
+    length = len(y_axis)
+    if length > 20:
+        step = abs(len(y_axis)/20)
+        y_axis = y_axis[0:length:step]
+            
     chart.add_data(data)
 
     # Set the line colour to blue
