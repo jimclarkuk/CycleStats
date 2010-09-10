@@ -18,13 +18,15 @@ _urllib = urllib2
 attrib = {'format': 'json'}
 data = urllib.urlencode(attrib)
 db = MySQLdb.connect(host="localhost", user="bike", passwd="bike", db="bike")
-logging = 0
+logging = 1
             
 def usage():
-    print "usage: ", sys.argv[0], " [-l location ID] | [-a] | [-m]"
+    print "usage: ", sys.argv[0], " [-l location ID] | [-a] | [-m] | [-s]"
     print "-l [location ID] : Get the graph for a given location"
     print "-a : Get the graphs for all locations"
     print "-m : Queries the bike stats every 5mins for eeeever"
+    print "-s : Setup DB"
+    print "-q : Query all data from API"
     sys.exit(2)
 
 def log(message):
@@ -166,10 +168,12 @@ def monitor():
 def main():
     try:
         #u:st: [there is a parameter following -u and -t options,option -s without parameter]
-        opts, args = getopt.getopt(sys.argv[1:], "al:m")
+        opts, args = getopt.getopt(sys.argv[1:], "al:msq")
         mon = 0
         get_location = 0
         get_all = 0
+        setup = 0 #172.16.42.40
+        query = 0
     except getopt.GetoptError:
         #print help information and exit:
         sys.stdout = sys.stderr
@@ -182,6 +186,10 @@ def main():
         if o == "-l":
             get_location = 1
             id = a
+        if o == "-s":
+            setup = 1
+        if o == "-q":
+            query = 1
     if get_all and get_location:
         print "Ooops, do you want all locations (-a) or a single location (-l [ID])"
         usage()
@@ -194,6 +202,13 @@ def main():
     if get_location:
         print queryData(id).get_url()
         return
+    if setup:
+        setup_db()
+        setupDB_capacity()
+        return
+    if query:
+        print get_all_locations()
+        return;
     usage()
             
 if __name__ == '__main__':
